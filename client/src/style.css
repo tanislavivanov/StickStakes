@@ -91,6 +91,11 @@ body {
   min-width: 3.2em;
 }
 
+.roster-hat {
+  font-size: 10px;
+  line-height: 1;
+}
+
 .roster-host {
   font-size: 9px;
   letter-spacing: 0.06em;
@@ -463,6 +468,29 @@ button:disabled {
 
 .chip:disabled:not(.is-on) {
   opacity: 0.45;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.swatch.is-on {
+  border-color: var(--ink);
+}
+
+.swatch:disabled {
+  opacity: 0.25;
 }
 
 #lobby-hint {

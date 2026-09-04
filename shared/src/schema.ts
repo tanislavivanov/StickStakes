@@ -32,6 +32,8 @@ export const Player = schema(
   {
     name: t.string().default(""),
     color: t.string().default("#ffffff"),
+    /** Cosmetic only; "none" or one of `HAT_OPTIONS`. Lobby-editable, like colour. */
+    hat: t.string().default("none"),
     /** Join order, also the spawn point index. */
     slot: t.uint8().default(0),
 

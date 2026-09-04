@@ -172,9 +172,13 @@ export const COYOTE_TICKS = 4;
 export const JUMP_BUFFER_TICKS = 5;
 
 /**
- * Stickman colours, handed out in join order. Ten of them, ordered so the
- * earliest joiners get the most distinguishable pairs — with ten sticks in a
- * scrum, telling yours apart is the whole game.
+ * Stickman colours. Handed out in join order as a sensible default, and
+ * freely repickable from this same palette in the lobby (see `HAT_OPTIONS`
+ * below for the other half of "customizable in the lobby only"). Ten of
+ * them, ordered so the earliest joiners get the most distinguishable pairs —
+ * with ten sticks in a scrum, telling yours apart is the whole game. That is
+ * also why the server refuses to hand out a colour someone else already
+ * holds: free choice, but never a duplicate mid-match.
  */
 export const PLAYER_COLORS: readonly string[] = [
   "#ff5a5f", // red
@@ -187,4 +191,18 @@ export const PLAYER_COLORS: readonly string[] = [
   "#6ee7d7", // teal
   "#b0bec5", // slate
   "#a3e635", // lime
+];
+
+/**
+ * Hats. Purely cosmetic — unlike colour, wearing the same one as someone else
+ * costs nothing — so there is no uniqueness rule here. "none" is the default
+ * and every player's starting look.
+ */
+export const HAT_OPTIONS: readonly string[] = [
+  "none",
+  "cap",
+  "tophat",
+  "crown",
+  "halo",
+  "party",
 ];

@@ -9,6 +9,7 @@
  * Exits non-zero on the first failed expectation, so CI can gate on it.
  */
 import { Client } from "@colyseus/sdk";
+import { PLAYER_COLORS } from "@stickstakes/shared";
 
 const ENDPOINT = process.env.SERVER_URL ?? "http://localhost:2567";
 const TICK_MS = 1000 / 30;
@@ -87,6 +88,19 @@ await waitFor(a, () => phase(a) === "playing", "playing");
 check("phase is playing", phase(a) === "playing");
 check("unfrozen at fight start", !me(a).frozen && !me(b).frozen);
 check("i-frames on spawn", me(a).invulnUntilTick > state(a).tick);
+
+console.log("\n=== look locks once the match is running ===");
+const colorBeforeCustomize = me(a).color;
+const unusedColor = PLAYER_COLORS.find(
+  (c) => c !== me(a).color && c !== me(b).color,
+);
+a.room.send("customize", { color: unusedColor, hat: "crown" });
+await sleep(300);
+check(
+  "a valid look change is still ignored outside the lobby",
+  me(a).color === colorBeforeCustomize && me(a).hat === "none",
+  `color=${me(a).color} hat=${me(a).hat}`,
+);
 
 console.log("\n=== attack swing ===");
 a.intent.attack = true;

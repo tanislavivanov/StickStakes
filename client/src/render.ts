@@ -18,6 +18,8 @@ export interface Stickman {
   facing: number;
   grounded: boolean;
   color: string;
+  /** "none" or one of `HAT_OPTIONS`; drawn above the head. */
+  hat: string;
   name: string;
   isSelf: boolean;
   /** Lives left, and the round's maximum — drawn as pips above the name. */
@@ -45,6 +47,107 @@ function damageColor(damage: number): string {
   if (damage >= 100) return "#ff9f45";
   if (damage >= 50) return "#ffd166";
   return "#e8ecf1";
+}
+
+/**
+ * Draws above the head, anchored on its top edge. Kept as simple filled/
+ * stroked shapes in the same line-art style as the rest of the stickman —
+ * no image assets, so a hat is just a few more canvas calls.
+ */
+function drawHat(
+  ctx: CanvasRenderingContext2D,
+  man: Stickman,
+  headX: number,
+  headY: number,
+  headR: number,
+): void {
+  if (!man.hat || man.hat === "none") return;
+
+  const topY = headY - headR;
+  const tone = man.stunned ? "#ffffff" : man.color;
+  ctx.save();
+  ctx.fillStyle = tone;
+  ctx.strokeStyle = tone;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+
+  switch (man.hat) {
+    case "cap": {
+      ctx.beginPath();
+      ctx.arc(headX, topY + 2, headR * 0.95, Math.PI, 0);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(
+        headX + man.facing * headR * 0.85,
+        topY + 3,
+        headR * 0.55,
+        headR * 0.22,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fill();
+      break;
+    }
+
+    case "tophat": {
+      const w = headR * 1.5;
+      const crownH = headR * 1.25;
+      ctx.fillRect(headX - w / 2, topY - crownH, w, crownH * 0.8);
+      ctx.fillRect(headX - w * 0.72, topY - crownH * 0.22, w * 1.44, crownH * 0.22);
+      break;
+    }
+
+    case "crown": {
+      // Three points — left, centre, right — not two, or it reads as cat ears.
+      const w = headR * 1.9;
+      const baseY = topY + 1;
+      const valleyY = baseY - headR * 0.35;
+      const sidePeakY = topY - headR * 0.95;
+      const centerPeakY = topY - headR * 1.3;
+      ctx.beginPath();
+      ctx.moveTo(headX - w / 2, baseY);
+      ctx.lineTo(headX - w / 2, valleyY);
+      ctx.lineTo(headX - w / 3, sidePeakY);
+      ctx.lineTo(headX - w / 6, valleyY);
+      ctx.lineTo(headX, centerPeakY);
+      ctx.lineTo(headX + w / 6, valleyY);
+      ctx.lineTo(headX + w / 3, sidePeakY);
+      ctx.lineTo(headX + w / 2, valleyY);
+      ctx.lineTo(headX + w / 2, baseY);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+
+    case "halo": {
+      ctx.beginPath();
+      ctx.ellipse(headX, topY - headR * 0.9, headR * 0.85, headR * 0.28, 0, 0, Math.PI * 2);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      break;
+    }
+
+    case "party": {
+      const w = headR * 1.3;
+      const h = headR * 1.9;
+      ctx.beginPath();
+      ctx.moveTo(headX - w / 2, topY + 2);
+      ctx.lineTo(headX + w / 2, topY + 2);
+      ctx.lineTo(headX, topY - h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(headX, topY - h - 2.5, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+    }
+
+    default:
+      break;
+  }
+
+  ctx.restore();
 }
 
 function require2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -149,6 +252,8 @@ export function createRenderer(canvas: HTMLCanvasElement) {
     ctx.beginPath();
     ctx.arc(x + lean, headY, headR, 0, Math.PI * 2);
     ctx.stroke();
+
+    drawHat(ctx, man, x + lean, headY, headR);
 
     ctx.beginPath();
     ctx.moveTo(x + lean, neckY);
