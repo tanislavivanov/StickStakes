@@ -42,12 +42,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run dev stack + Cloudflare quick tunnel
+      # This step must finish quickly and exit: GitHub only uploads a step's
+      # $GITHUB_STEP_SUMMARY content once that step completes, so the tunnel
+      # URL has to be found and reported in its own short step. Keeping the
+      # runner alive afterwards is a separate step below - the background
+      # process survives the step boundary (setsid+nohup detaches it from
+      # this step's shell so it isn't killed when the shell exits).
+      - name: Start dev stack + report tunnel URL
         run: |
           set -uo pipefail
 
-          npm run dev:phone > /tmp/stickstakes.log 2>&1 &
+          setsid nohup npm run dev:phone > /tmp/stickstakes.log 2>&1 < /dev/null &
           RUN_PID=$!
+          echo "RUN_PID=$RUN_PID" >> "$GITHUB_ENV"
 
           echo "Waiting for the tunnel URL..."
           URL=""
@@ -70,6 +77,7 @@ jobs:
 
           case "$MINUTES" in ''|*[!0-9]*) MINUTES=60 ;; esac
           if [ "$MINUTES" -gt 350 ]; then MINUTES=350; fi
+          echo "MINUTES=$MINUTES" >> "$GITHUB_ENV"
 
           {
             echo "## 📱 Open this on your phone"
@@ -80,9 +88,11 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "Tunnel URL: $URL"
 
+      - name: Keep tunnel alive
+        run: |
+          set -uo pipefail
           END=$((SECONDS + MINUTES * 60))
           while kill -0 "$RUN_PID" 2>/dev/null && [ $SECONDS -lt $END ]; do
             sleep 15
           done
-
           echo "Tunnel window ended, shutting down."
