@@ -1,0 +1,88 @@
+name: Phone tunnel
+
+# Spins up the StickStakes MVP (client + Colyseus server) on a GitHub-hosted
+# runner and publishes it through a Cloudflare quick tunnel, so it can be
+# opened on a phone without a local dev environment or a real deployment.
+# The link only stays live for the duration of the run.
+#
+# Usage: push to this branch, or Actions tab -> "Phone tunnel" -> Run
+# workflow, then open the run and read the job summary for the URL once it
+# appears.
+
+on:
+  push:
+    branches:
+      - phone-tunnel
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutes to keep the tunnel open (max 350)"
+        required: false
+        default: "60"
+
+concurrency:
+  group: phone-tunnel
+  cancel-in-progress: true
+
+jobs:
+  tunnel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      MINUTES: ${{ github.event.inputs.minutes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run dev stack + Cloudflare quick tunnel
+        run: |
+          set -uo pipefail
+
+          npm run dev:phone > /tmp/stickstakes.log 2>&1 &
+          RUN_PID=$!
+
+          echo "Waiting for the tunnel URL..."
+          URL=""
+          for i in $(seq 1 60); do
+            URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/stickstakes.log | head -n1 || true)
+            if [ -n "$URL" ]; then break; fi
+            if ! kill -0 "$RUN_PID" 2>/dev/null; then break; fi
+            sleep 2
+          done
+
+          if [ -z "$URL" ]; then
+            {
+              echo "## StickStakes tunnel failed to start"
+              echo '```'
+              tail -n 150 /tmp/stickstakes.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          case "$MINUTES" in ''|*[!0-9]*) MINUTES=60 ;; esac
+          if [ "$MINUTES" -gt 350 ]; then MINUTES=350; fi
+
+          {
+            echo "## 📱 Open this on your phone"
+            echo ""
+            echo "### $URL"
+            echo ""
+            echo "This link stays live only while this run is in progress (up to ${MINUTES} minutes, or until it's cancelled). Push again or re-run the workflow for a fresh link."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Tunnel URL: $URL"
+
+          END=$((SECONDS + MINUTES * 60))
+          while kill -0 "$RUN_PID" 2>/dev/null && [ $SECONDS -lt $END ]; do
+            sleep 15
+          done
+
+          echo "Tunnel window ended, shutting down."
