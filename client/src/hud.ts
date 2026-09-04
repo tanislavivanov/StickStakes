@@ -36,6 +36,15 @@ function stars(filled: number, total: number): string {
   return "★".repeat(Math.max(0, filled)) + "☆".repeat(Math.max(0, total - filled));
 }
 
+/** Same glyphs the lobby's hat picker uses — one visual language. */
+const HAT_GLYPHS: Record<string, string> = {
+  cap: "🧢",
+  tophat: "🎩",
+  crown: "👑",
+  halo: "😇",
+  party: "🎉",
+};
+
 /** Same ramp the canvas uses over each stickman's head — one visual language. */
 function damageColor(damage: number): string {
   if (damage >= 150) return "#ff5a5f";
@@ -154,7 +163,10 @@ export function createHud(root: ParentNode = document): Hud {
 
     // Cheap change detection: rebuild only when something visible moved.
     const key = entries
-      .map(([id, p]) => `${id}:${p.name}:${p.lives}:${p.roundWins}:${p.spectating}:${p.damage}`)
+      .map(
+        ([id, p]) =>
+          `${id}:${p.name}:${p.color}:${p.hat}:${p.lives}:${p.roundWins}:${p.spectating}:${p.damage}`,
+      )
       .join("|") + `|${phase}|${state.hostId}`;
     if (key === lastRosterKey) return;
     lastRosterKey = key;
@@ -175,6 +187,13 @@ export function createHud(root: ParentNode = document): Hud {
         name.textContent = player.name;
 
         li.append(dot, name);
+
+        if (player.hat !== "none") {
+          const hat = document.createElement("span");
+          hat.className = "roster-hat";
+          hat.textContent = HAT_GLYPHS[player.hat] ?? "";
+          li.append(hat);
+        }
 
         if (sessionId === state.hostId) {
           const host = document.createElement("span");

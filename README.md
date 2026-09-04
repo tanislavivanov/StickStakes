@@ -4,8 +4,9 @@ A stickman brawler for settling who pays. See [`PLAN.md`](./PLAN.md) for the
 product; this file is the state of the code.
 
 **Done so far:** the monorepo and netcode (step 1), the core match loop
-(Track A), combat (Track B), and the stakes layer (Track C) — room codes, the
-join screen, host setup, and an end screen that names who pays. Up to 10
+(Track A), combat (Track B), the stakes layer (Track C) — room codes, the
+join screen, host setup, and an end screen that names who pays — and
+character customization: colour and hat, picked in the lobby. Up to 10
 players per game.
 
 ## Repo shape
@@ -123,6 +124,24 @@ or settled; the split helper divides a number the user types and shows the
 answer. The moment real money moves through it, it becomes a gambling product
 with the app-store and payment-services rules that implies.
 
+## Character customization
+
+Everyone in the lobby — not just the host — picks their own colour and hat
+from the "Your look" row: ten colours, six hats (including "none"). Both are
+sent as one `customize` message and applied only to your own player; the
+server ignores an attempt to touch anyone else's.
+
+It's **lobby only**, the same way the match setup is: the picker only exists
+on the lobby screen, which is itself only shown during `phase === "lobby"`,
+and the server independently refuses `customize` outside that phase — a
+colour and hat are how you spot a fighter mid-scrum, so they lock the moment
+the countdown starts, same as the match won't quietly change its own rounds
+or lives mid-fight.
+
+Colours can't collide: the server refuses to hand out one someone else is
+already wearing, so ten players always stay ten distinguishable silhouettes.
+Hats have no such rule — purely cosmetic, so duplicates are fine.
+
 ## Combat
 
 No health bars — you die by leaving the arena. Damage is purely a **knockback
@@ -168,8 +187,8 @@ else.
 
 ## Not built yet
 
-The colour picker, combat and knockback, weapons, the shrinking platform,
-the stake text and the ledger, the PWA manifest, and deployment. The attack
+Weapons, the shrinking platform, the ledger, the PWA manifest, and
+deployment. The attack
 button swings but has no hitbox — Track B hangs one on the same
 `attackUntilTick` window the animation already reads. Matter.js is not a dependency yet — the
 character controller in `shared/src/physics.ts` is a deliberately small

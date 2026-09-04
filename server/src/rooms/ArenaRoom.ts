@@ -11,6 +11,7 @@ import {
   HITSTUN_MAX_MS,
   HITSTUN_PER_DAMAGE_MS,
   HIT_DAMAGE,
+  HAT_OPTIONS,
   KNOCKBACK_BASE,
   KNOCKBACK_LIFT,
   KNOCKBACK_SCALING,
@@ -50,6 +51,12 @@ interface Configure {
   totalRounds?: number;
   livesPerRound?: number;
   stake?: string;
+}
+
+/** Per-player look. Anyone may send this for themselves, lobby only. */
+interface Customize {
+  color?: string;
+  hat?: string;
 }
 
 /**
@@ -143,6 +150,30 @@ export class ArenaRoom extends Room<{ state: ArenaState; input: FightInput }> {
       if (!player) return;
       const name = String(message?.name ?? "").trim().slice(0, MAX_NAME_LENGTH);
       if (name) player.name = name;
+    });
+
+    /**
+     * Per-player look: colour and hat. Anyone may set their own, never
+     * someone else's, and only while the lobby is still up — once a match is
+     * running, colours are how you tell fighters apart mid-scrum, so they
+     * lock the moment the countdown starts.
+     */
+    this.onMessage("customize", (client, message: Customize) => {
+      const player = this.state.players.get(client.sessionId);
+      if (!player) return;
+      if (this.state.phase !== "lobby") return;
+
+      if (
+        typeof message?.color === "string" &&
+        PLAYER_COLORS.includes(message.color) &&
+        !this.isColorTaken(message.color, client.sessionId)
+      ) {
+        player.color = message.color;
+      }
+
+      if (typeof message?.hat === "string" && HAT_OPTIONS.includes(message.hat)) {
+        player.hat = message.hat;
+      }
     });
 
     this.setFixedTimestep((ctx) => {
@@ -478,6 +509,14 @@ export class ArenaRoom extends Room<{ state: ArenaState; input: FightInput }> {
   }
 
   // ---------------------------------------------------------------- helpers
+
+  /** Is some other player already wearing this colour? */
+  private isColorTaken(color: string, exceptSessionId: string): boolean {
+    for (const [sessionId, player] of this.state.players) {
+      if (sessionId !== exceptSessionId && player.color === color) return true;
+    }
+    return false;
+  }
 
   /** Everyone taking part in the current round, as [sessionId, player]. */
   private fighters(): [string, Player][] {

@@ -148,6 +148,7 @@ async function main(): Promise<void> {
   hud.onStart(() => room.send("startMatch"));
   result.onPlayAgain(() => room.send("startMatch"));
   lobby.onConfigure((change) => room.send("configure", change));
+  lobby.onCustomize((change) => room.send("customize", change));
 
   function flash(message: string): void {
     if (!message) return;
@@ -239,6 +240,7 @@ async function main(): Promise<void> {
         facing: player.facing,
         grounded: player.grounded,
         color: player.color,
+        hat: player.hat,
         name: player.name,
         isSelf: sessionId === room.sessionId,
         lives: player.lives,

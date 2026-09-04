@@ -11,8 +11,10 @@
 import { Client } from "@colyseus/sdk";
 import {
   DEFAULT_STAKE,
+  HAT_OPTIONS,
   MAX_PLAYERS,
   MAX_STAKE_LENGTH,
+  PLAYER_COLORS,
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
   ROOM_NAME,
@@ -57,6 +59,41 @@ try {
   badCodeError = String(error.message ?? error);
 }
 check("an unknown code is refused", /not found/i.test(badCodeError), badCodeError.slice(0, 60));
+
+console.log("\n=== customize: colour and hat ===");
+const pickColor = PLAYER_COLORS[3];
+const pickHat = HAT_OPTIONS[2];
+guest.send("customize", { color: pickColor, hat: pickHat });
+await sleep(400);
+const guestSelf = () => rooms[1].state.players.get(guest.sessionId);
+check("guest picked their own colour", guestSelf().color === pickColor, guestSelf().color);
+check("guest picked their own hat", guestSelf().hat === pickHat, guestSelf().hat);
+
+console.log("\n=== customize: invalid values are ignored ===");
+guest.send("customize", { color: "#not-a-real-color", hat: "sombrero" });
+await sleep(300);
+check("bogus colour rejected", guestSelf().color === pickColor, guestSelf().color);
+check("bogus hat rejected", guestSelf().hat === pickHat, guestSelf().hat);
+
+console.log("\n=== customize: colours can't collide ===");
+const hostSelf = () => rooms[1].state.players.get(rooms[1].sessionId);
+rooms[1].send("customize", { color: pickColor });
+await sleep(300);
+check(
+  "a colour someone else already holds is refused",
+  hostSelf().color !== pickColor,
+  hostSelf().color,
+);
+
+console.log("\n=== customize: only your own ===");
+const hostColorBefore = hostSelf().color;
+guest.send("customize", { color: PLAYER_COLORS[5] });
+await sleep(300);
+check(
+  "customizing yourself never touches someone else's player",
+  hostSelf().color === hostColorBefore,
+  hostSelf().color,
+);
 
 console.log("\n=== capacity ===");
 for (let i = 0; opened.length < MAX_PLAYERS + 2 && i < MAX_PLAYERS; i++) {
