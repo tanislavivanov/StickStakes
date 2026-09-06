@@ -347,8 +347,8 @@ server-side against the shipped list). Seven ship today: **Classic** (the
 original geometry, now with a backdrop), **Towers** (a four-storey scaffold),
 **Canyon** (a spiked gap between two mesas), **Foundry** (girders, catwalks and
 live saw blades), **Skyway** (floating stones over open air), **Rooftops**
-(three roofs at three heights with fatal gaps between them) and **IBM Bulgaria
-(SAC)** (the Sofia Airport Center complex — a lakeside plaza under a climbable
+(three roofs at three heights with fatal gaps between them) and **Lake building**
+(the Sofia Airport Center complex — a lakeside plaza under a climbable
 glass façade, with the lake as the only way off the map).
 
 Every tier of every map is reachable: a full-hold jump lifts the feet ~97px
