@@ -477,8 +477,8 @@ const ROOFTOPS: WorldMap = {
  */
 const IBM_SAC: WorldMap = {
   id: "ibm-sac",
-  name: "IBM Bulgaria (SAC)",
-  blurb: "IBM's Sofia offices, climbing the glass over the lake.",
+  name: "Lake building",
+  blurb: "Sofia office glass, climbed over the lake.",
   sky: ["#7fb4dd", "#c6dded"],
   ink: "#49535f",
   solids: [
